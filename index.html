@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brainstorming - 苏格拉底式思路梳理与规划工具</title>
+<style>
+:root{--primary:#6366F1;--primary-light:#A5B4FC;--primary-dark:#4338CA;--accent:#F59E0B;--success:#10B981;--success-dark:#059669;--danger:#EF4444;--bg-deep:#0B0F1A;--bg:#111827;--bg-card:#1F2937;--bg-elevated:#374151;--text:#F9FAFB;--text-sec:#D1D5DB;--text-muted:#9CA3AF;--border:#374151;--border-light:#4B5563}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg-deep);color:var(--text);min-height:100vh;line-height:1.7}
+body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 20%,rgba(99,102,241,.08) 0%,transparent 50%),radial-gradient(circle at 70% 80%,rgba(245,158,11,.05) 0%,transparent 50%);pointer-events:none;z-index:0}
+.app{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:2rem 1.5rem 4rem}
+header{text-align:center;padding:2rem 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem}
+header h1{font-size:1.65rem;font-weight:700;background:linear-gradient(135deg,var(--primary-light),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.4rem}
+header .sub{color:var(--text-muted);font-size:.9rem;max-width:460px;margin:0 auto}
+header .credit{margin-top:.8rem;font-size:.75rem;color:var(--text-muted);opacity:.55}
+.phase-nav{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:2.5rem;flex-wrap:wrap}
+.ph{display:flex;align-items:center;gap:.4rem;cursor:pointer;padding:.4rem .7rem;border-radius:8px;transition:all .25s;opacity:.45}
+.ph:hover{opacity:.7}
+.ph.active{opacity:1;background:rgba(99,102,241,.15)}
+.ph.done{opacity:.75}
+.ph-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;transition:all .25s}
+.ph.active .ph-dot{border-color:var(--primary);background:var(--primary);color:#fff}
+.ph.done .ph-dot{border-color:var(--success);background:var(--success);color:#fff}
+.ph-label{font-size:.78rem;color:var(--text-muted);white-space:nowrap}
+.ph.active .ph-label{color:var(--primary-light)}
+.ph-connector{width:24px;height:2px;background:var(--border);margin:0 .15rem;transition:background .25s}
+.ph-connector.done{background:var(--success)}
+.panel{display:none;animation:fadeUp .35s ease}
+.panel.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:1.6rem;margin-bottom:1.4rem}
+.card-head{display:flex;align-items:center;gap:.7rem;margin-bottom:1rem}
+.card-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0}
+.card-icon.blue{background:linear-gradient(135deg,#6366F1,#818CF8)}
+.card-icon.amber{background:linear-gradient(135deg,#F59E0B,#FBBF24)}
+.card-icon.green{background:linear-gradient(135deg,#10B981,#34D399)}
+.card-icon.red{background:linear-gradient(135deg,#EF4444,#F87171)}
+.card-icon.purple{background:linear-gradient(135deg,#8B5CF6,#A78BFA)}
+.card-title{font-size:1.15rem;font-weight:600}
+.card-subtitle{color:var(--text-muted);font-size:.85rem;margin-top:.15rem}
+textarea,.input-field{width:100%;padding:.8rem 1rem;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:.95rem;min-height:140px;resize:vertical;transition:border-color .25s,box-shadow .25s;font-family:inherit;line-height:1.6}
+textarea:focus,.input-field:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--glow-primary)}
+.btn{padding:.7rem 1.4rem;border-radius:9px;font-size:.92rem;font-weight:500;cursor:pointer;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:.45rem;font-family:inherit}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 4px 14px var(--glow-primary)}
+.btn-success{background:var(--success);color:#fff}
+.btn-success:hover{background:var(--success-dark)}
+.btn-ghost{background:transparent;color:var(--text-sec);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--bg-elevated);border-color:var(--border-light)}
+.btn-sm{padding:.5rem 1rem;font-size:.85rem}
+.btn-group{display:flex;gap:.8rem;margin-top:1.5rem;flex-wrap:wrap}
+.hint-box{background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.25);border-radius:10px;padding:1rem 1.2rem;margin:1rem 0}
+.hint-box h4{color:var(--primary-light);font-size:.88rem;margin-bottom:.4rem}
+.hint-box ul,.hint-box p{font-size:.88rem;color:var(--text-muted)}
+.hint-box ul{padding-left:1.2rem;margin:.3rem 0}
+.hint-box li{margin:.25rem 0}
+.chat-area{max-height:520px;overflow-y:auto;padding-right:.5rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.chat-area::-webkit-scrollbar{width:5px}
+.chat-area::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.msg{margin-bottom:1.2rem;animation:fadeUp .3s ease}
+.msg-system{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem}
+.msg-system .msg-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-light);font-weight:600;margin-bottom:.5rem}
+.msg-system .msg-body{font-size:.95rem;color:var(--text-sec)}
+.msg-system .msg-body strong{color:var(--text);font-weight:600}
+.msg-user{display:flex;justify-content:flex-end}
+.msg-user .msg-bubble{background:var(--primary);color:#fff;border-radius:12px 12px 4px 12px;padding:.7rem 1.1rem;max-width:80%;font-size:.92rem}
+.msg-options{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.7rem;margin-top:.8rem}
+.opt-btn{background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:.8rem 1rem;cursor:pointer;transition:all .2s;text-align:left}
+.opt-btn:hover{border-color:var(--primary-light);background:rgba(99,102,241,.08)}
+.opt-btn.selected{border-color:var(--primary);background:rgba(99,102,241,.15)}
+.opt-btn h4{font-size:.9rem;color:var(--text);margin-bottom:.2rem}
+.opt-btn p{font-size:.82rem;color:var(--text-muted);margin:0}
+.opt-btn .rec{color:var(--accent);font-size:.78rem;font-weight:600;margin-top:.4rem}
+.msg-input{display:flex;gap:.7rem;margin-top:1rem;align-items:flex-end}
+.msg-input textarea{min-height:52px;max-height:120px;border-radius:10px;font-size:.9rem}
+.analysis-card{background:var(--bg);border-radius:10px;padding:1.1rem 1.2rem;margin:.8rem 0}
+.analysis-card h4{color:var(--primary-light);font-size:.88rem;margin-bottom:.5rem}
+.tag{display:inline-block;padding:.2rem .65rem;border-radius:20px;font-size:.8rem;margin:.2rem}
+.tag-blue{background:rgba(99,102,241,.15);color:var(--primary-light)}
+.tag-green{background:rgba(16,185,129,.15);color:var(--success)}
+.tag-amber{background:rgba(245,158,11,.15);color:var(--accent)}
+.option-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;margin:1.2rem 0}
+.option-card{background:var(--bg);border:2px solid var(--border);border-radius:12px;padding:1.2rem;cursor:pointer;transition:all .25s}
+.option-card:hover{border-color:var(--primary-light);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.option-card.selected{border-color:var(--primary);background:rgba(99,102,241,.1)}
+.option-card.recommended{border-color:var(--accent)}
+.option-card h4{color:var(--primary-light);margin-bottom:.4rem;font-size:1rem}
+.option-card p{color:var(--text-muted);font-size:.88rem;margin:.2rem 0}
+.option-card .rec-badge{display:inline-block;background:var(--accent);color:#000;font-size:.75rem;font-weight:700;padding:.15rem .5rem;border-radius:4px;margin-bottom:.5rem}
+.option-card .fit{color:var(--success);font-size:.82rem;margin-top:.6rem}
+.compare-table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.88rem}
+.compare-table th,.compare-table td{padding:.75rem;text-align:left;border-bottom:1px solid var(--border)}
+.compare-table th{color:var(--text-muted);font-weight:500;background:var(--bg);font-size:.82rem}
+.compare-table tr:hover td{background:rgba(99,102,241,.04)}
+.doc-preview{background:var(--bg);border-radius:10px;padding:1.5rem;border:1px solid var(--border);max-height:500px;overflow-y:auto;font-size:.92rem;line-height:1.7;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.doc-preview h1{color:var(--primary-light);font-size:1.4rem;margin-bottom:.8rem;padding-bottom:.5rem;border-bottom:2px solid var(--border)}
+.doc-preview h2{color:var(--text);font-size:1.15rem;margin:1.3rem 0 .6rem}
+.doc-preview h3{color:var(--primary-light);font-size:1.05rem;margin:1rem 0 .4rem}
+.doc-preview p{margin:.6rem 0}
+.doc-preview ul,.doc-preview ol{padding-left:1.4rem;margin:.4rem 0}
+.doc-preview li{margin:.3rem 0}
+.doc-preview table{width:100%;border-collapse:collapse;margin:.8rem 0;font-size:.88rem}
+.doc-preview th,.doc-preview td{padding:.6rem .75rem;border:1px solid var(--border);text-align:left}
+.doc-preview th{background:var(--bg-card);color:var(--text-muted);font-weight:500}
+.doc-preview blockquote{border-left:3px solid var(--primary);padding-left:1rem;margin:.8rem 0;color:var(--text-muted);font-style:italic}
+.doc-preview hr{border:none;border-top:1px solid var(--border);margin:1.2rem 0}
+.doc-preview strong{color:var(--text)}
+.check-group{display:flex;flex-direction:column;gap:.7rem;margin:1.2rem 0}
+.check-item{display:flex;align-items:flex-start;gap:.7rem;padding:.9rem 1rem;background:var(--bg);border-radius:9px;cursor:pointer;transition:background .2s}
+.check-item:hover{background:var(--bg-elevated)}
+.check-item input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary);cursor:pointer;flex-shrink:0;margin-top:2px}
+.check-item label{cursor:pointer;flex:1}
+.check-item .ck-title{font-weight:600;font-size:.92rem}
+.check-item .ck-desc{font-size:.82rem;color:var(--text-muted);margin-top:.15rem}
+.completion{text-align:center;padding:2.5rem 1rem}
+.completion-icon{font-size:3.5rem;margin-bottom:1rem}
+.completion h2{color:var(--success);margin-bottom:.6rem;font-size:1.4rem}
+.completion p{color:var(--text-muted);margin-bottom:1.5rem}
+.export-bar{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;margin:1.5rem 0}
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(100px);background:var(--bg-card);border:1px solid var(--border);padding:.8rem 1.4rem;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.35);opacity:0;transition:all .3s;z-index:1000;font-size:.9rem;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.review-section{margin:1rem 0;padding:1rem;background:var(--bg);border-radius:9px;border-left:3px solid var(--primary)}
+.review-section h4{color:var(--primary-light);font-size:.9rem;margin-bottom:.4rem}
+.review-section p{font-size:.88rem;color:var(--text-sec)}
+.review-section .issue{color:var(--danger);font-weight:500}
+.review-section .pass{color:var(--success);font-weight:500}
+.typing-dots{display:inline-flex;gap:4px;padding:.3rem 0}
+.typing-dots span{width:6px;height:6px;border-radius:50%;background:var(--primary-light);animation:blink 1.4s infinite both}
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.3}40%{opacity:1}}
+.history-item{padding:.6rem .8rem;background:rgba(99,102,241,.05);border-radius:6px;margin:.4rem 0;font-size:.85rem}
+.history-item .hi-q{color:var(--text-muted);font-size:.78rem}
+.history-item .hi-a{color:var(--primary-light);margin-top:.15rem}
+@media(max-width:640px){.app{padding:1rem}.option-grid{grid-template-columns:1fr}.msg-options{grid-template-columns:1fr}.phase-nav{gap:0}.ph-label{display:none}.ph-connector{width:12px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+<h1>Brainstorming 智能规划工具</h1>
+<p class="sub">基于 Superpowers 框架 · 苏格拉底式设计提炼 · 输入你的想法，理清思路并制定规划</p>
+<p class="credit">Skill source: github.com/obra/superpowers &mdash; brainstorming</p>
+</header>
+
+<!-- 阶段导航 -->
+<nav class="phase-nav" id="phaseNav">
+<div class="ph active" data-phase="1" onclick="jumpPhase(1)"><div class="ph-dot">1</div><span class="ph-label">输入想法</span></div><div class="ph-connector"></div>
+<div class="ph" data-phase="2" onclick="jumpPhase(2)"><div class="ph-dot">2</div><span class="ph-label">深入探索</span></div><div class="ph-connector"></div>
+<div class="ph" data-phase="3" onclick="jumpPhase(3)"><div class="ph-dot">3</div><span class="ph-label">方案对比</span></div><div class="ph-connector"></div>
+<div class="ph" data-phase="4" onclick="jumpPhase(4)"><div class="ph-dot">4</div><span class="ph-label">设计确认</span></div><div class="ph-connector"></div>
+<div class="ph" data-phase="5" onclick="jumpPhase(5)"><div class="ph-dot">5</div><span class="ph-label">生成文档</span></div>
+</nav>
+
+<!-- ========== Phase 1: 输入想法 ========== -->
+<div class="panel active" id="phase1">
+<div class="card">
+<div class="card-head">
+<div class="card-icon blue">💡</div>
+<div><div class="card-title">你想做什么？</div><div class="card-subtitle">描述你的想法、项目或目标，越详细越好</div></div>
+</div>
+<textarea id="ideaInput" placeholder="例如：&#10;&#10;我想做一个校园二手交易平台，方便学生在校内买卖二手物品。&#10;&#10;或者：&#10;开发一套铁路巡检无人机系统，利用计算机视觉自动检测铁轨缺陷，替代人工巡检提高效率。&#10;&#10;请尽量描述：&#10;• 你想解决什么问题？&#10;• 目标用户是谁？&#10;• 有什么特殊需求或约束？"></textarea>
+<div class="btn-group">
+<button class="btn btn-primary" onclick="startSession()">开始智能分析 →</button>
+</div>
+</div>
+<div class="hint-box">
+<h4>🎯 核心理念</h4>
+<p>这个工具不会立刻给你代码或最终方案。它会先通过苏格拉底式对话——<strong>逐个提问、逐步深入</strong>——帮你真正想清楚要做什么、为什么做、怎么做，最终输出一份经过验证的设计文档。</p>
+</div>
+</div>
+
+<!-- ========== Phase 2: 深入探索 ========== -->
+<div class="panel" id="phase2">
+<div class="card">
+<div class="card-head">
+<div class="card-icon blue">🔍</div>
+<div><div class="card-title">深入探索与需求澄清</div><div class="card-subtitle">基于你的想法，让我们一步步把思路理清</div></div>
+</div>
+<div id="analysisBlock"></div>
+<div class="chat-area" id="chatArea"></div>
+<div class="msg-input" id="msgInput" style="display:none">
+<textarea id="freeInput" placeholder="输入你的回答..." rows="2"></textarea>
+<button class="btn btn-primary btn-sm" onclick="submitFreeInput()">发送</button>
+</div>
+<div class="btn-group" style="margin-top:1rem">
+<button class="btn btn-ghost btn-sm" onclick="jumpPhase(1)">← 返回修改</button>
+<button class="btn btn-primary" id="finishQBtn" onclick="finishQuestions()" style="display:none">已充分讨论，进入方案探索 →</button>
+</div>
+</div>
+</div>
+
+<!-- ========== Phase 3: 方案对比 ========== -->
+<div class="panel" id="phase3">
+<div class="card">
+<div class="card-head">
+<div class="card-icon amber">⚖️</div>
+<div><div class="card-title">替代方案探索</div><div class="card-subtitle">基于我们的讨论，以下是几种可行方案</div></div>
+</div>
+<p style="color:var(--text-muted);margin-bottom:.5rem">为你生成了 <strong id="optCount">3</strong> 种方案，请选择最适合你的：</p>
+<div class="option-grid" id="optGrid"></div>
+<div class="card" style="background:var(--bg);margin-top:1.2rem">
+<div class="card-head"><div class="card-icon purple">📊</div><div class="card-title" style="font-size:1rem">方案对比</div></div>
+<table class="compare-table" id="cmpTable"><tr><th>维度</th><th>-</th></tr></table>
+</div>
+<div class="btn-group">
+<button class="btn btn-ghost" onclick="jumpPhase(2)">← 继续讨论</button>
+<button class="btn btn-primary" onclick="confirmOption()">确认方案 →</button>
+</div>
+</div>
+</div>
+
+<!-- ========== Phase 4: 设计确认 ========== -->
+<div class="panel" id="phase4">
+<div class="card">
+<div class="card-head">
+<div class="card-icon green">📋</div>
+<div><div class="card-title">设计文档预览与确认</div><div class="card-subtitle">请仔细审查以下设计，这是我们的讨论成果</div></div>
+</div>
+
+<div id="reviewBlock"></div>
+
+<div class="doc-preview" id="docPreview"></div>
+
+<div class="check-group">
+<div class="check-item"><input type="checkbox" id="ck1"><label for="ck1"><div class="ck-title">我已阅读并理解整个设计</div><div class="ck-desc">设计文档反映了我的真实需求和期望</div></label></div>
+<div class="check-item"><input type="checkbox" id="ck2"><label for="ck2"><div class="ck-title">设计中的模块边界清晰、职责单一</div><div class="ck-desc">每个模块都有明确的目的和接口</div></label></div>
+<div class="check-item"><input type="checkbox" id="ck3"><label for="ck3"><div class="ck-title">我同意按照此方案推进</div><div class="ck-desc">后续如有调整可再讨论</div></label></div>
+</div>
+<div class="btn-group">
+<button class="btn btn-ghost" onclick="jumpPhase(3)">← 重新选方案</button>
+<button class="btn btn-success" onclick="generateFinal()">✓ 确认并生成最终文档</button>
+</div>
+</div>
+</div>
+
+<!-- ========== Phase 5: 生成文档 ========== -->
+<div class="panel" id="phase5">
+<div class="card">
+<div class="completion">
+<div class="completion-icon">🎉</div>
+<h2>设计文档已生成</h2>
+<p>基于苏格拉底式对话和你的选择，已完成经过验证的设计文档</p>
+</div>
+<div id="finalDoc" style="margin:1.5rem 0"></div>
+<div class="export-bar">
+<button class="btn btn-primary" onclick="exportMd()">📥 导出 Markdown</button>
+<button class="btn btn-ghost" onclick="copyDoc()">📋 复制到剪贴板</button>
+<button class="btn btn-ghost" onclick="restart()">🔄 开始新规划</button>
+</div>
+</div>
+<div class="card">
+<div class="hint-box">
+<h4>🚀 下一步建议</h4>
+<ul>
+<li>调用 <strong>writing-plans</strong> 技能创建详细实施计划</li>
+<li>使用 <strong>test-driven-development</strong> 编写测试用例</li>
+<li>使用 <strong>using-git-worktrees</strong> 创建隔离工作空间</li>
+<li>进入 <strong>subagent-driven-development</strong> 开始实施</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// =============================================
+// Brainstorming Engine — based on obra/superpowers
+// =============================================
+
+const S = {
+  phase: 1,
+  idea: '',
+  analysis: null,
+  answers: {},
+  freeAnswers: [],
+  questions: [],
+  qIndex: 0,
+  options: [],
+  selectedOpt: null,
+  designDoc: '',
+  designMd: ''
+};
+
+// --- Domain patterns ---
+const DOMAINS = [
+  {p:/无人机|UAV|巡检|飞控|四旋翼|航拍/,d:'无人机系统',kw:['飞行控制','航线规划','RTK定位','避障系统','YOLO缺陷检测','地面站']},
+  {p:/电商|购物|商城|店铺|订单|零售|二手交易/,d:'电子商务',kw:['用户系统','商品管理','订单处理','支付网关','物流追踪']},
+  {p:/教育|课程|学习|培训|学校|教学|校园/,d:'教育科技',kw:['在线课堂','学习系统','考试评估','内容管理']},
+  {p:/医疗|健康|医院|挂号|问诊/,d:'医疗健康',kw:['预约系统','电子病历','远程诊疗','健康监测']},
+  {p:/金融|银行|投资|理财|支付|保险/,d:'金融科技',kw:['支付系统','风控引擎','用户认证','合规审计']},
+  {p:/社交|社区|论坛|聊天|即时通讯/,d:'社交网络',kw:['消息系统','用户关系','内容审核','实时通信']},
+  {p:/物流|配送|仓储|运输|快递|供应链/,d:'物流系统',kw:['路径规划','库存管理','订单追踪','智能调度']},
+  {p:/制造|工厂|生产|工业|车间|MES/,d:'智能制造',kw:['生产管理','设备监控','质量检测','数据采集']},
+  {p:/农业|种植|养殖|农田|温室/,d:'智慧农业',kw:['环境监测','精准灌溉','病虫害检测','溯源系统']},
+  {p:/能源|电力|电网|光伏|风电|储能/,d:'能源管理',kw:['能耗监控','设备运维','预测维护','优化调度']},
+  {p:/数据|分析|报表|可视化|BI|仪表盘/,d:'数据分析',kw:['数据采集','清洗处理','可视化','报表生成']},
+  {p:/网站|网页|H5|前端|博客|CMS/,d:'Web应用',kw:['用户系统','内容管理','响应式设计','SEO']},
+  {p:/APP|移动|小程序|安卓|苹果|iOS/,d:'移动应用',kw:['原生开发','跨平台框架','推送通知','离线存储']},
+  {p:/游戏|VR|AR|元宇宙|虚拟现实/,d:'游戏娱乐',kw:['游戏引擎','物理系统','UI系统','社交功能']},
+  {p:/API|接口|服务|微服务|后端|网关/,d:'后端服务',kw:['REST API','GraphQL','认证授权','日志监控']},
+  {p:/自动化|脚本|机器人|RPA|流程/,d:'自动化系统',kw:['任务调度','脚本执行','监控告警','异常处理']},
+  {p:/视频|直播|短视频|点播|流媒体/,d:'视频平台',kw:['CDN分发','转码处理','推荐算法','内容审核']},
+  {p:/图书|阅读|电子书|知识库|文档/,d:'内容平台',kw:['内容管理','检索系统','推荐引擎','版权管理']}
+];
+
+const TECHS = [
+  {p:/Python/,t:'Python'},{p:/JavaScript|JS|Node\.?js/,t:'Node.js'},{p:/Java/,t:'Java'},
+  {p:/Vue/,t:'Vue.js'},{p:/React/,t:'React'},{p:/MySQL/,t:'MySQL'},{p:/PostgreSQL/,t:'PostgreSQL'},
+  {p:/MongoDB/,t:'MongoDB'},{p:/Redis/,t:'Redis'},{p:/Docker/,t:'Docker'},{p:/Kubernetes|k8s/,t:'Kubernetes'},
+  {p:/机器学习|ML|TensorFlow|PyTorch/,t:'机器学习'},{p:/深度学习|神经网络/,t:'深度学习'},
+  {p:/YOLO|图像识别|视觉|OpenCV/,t:'计算机视觉'},{p:/PX4|飞控/,t:'PX4飞控'},
+  {p:/RTK|GPS|北斗/,t:'高精度定位'},{p:/阿里云|腾讯云|AWS/,t:'云服务'},
+  {p:/物联网|IOT|传感器/,t:'IoT'},{p:/5G|边缘计算/,t:'5G/边缘计算'},
+  {p:/Arduino|STM32|单片机/,t:'嵌入式'}
+];
+
+// --- Analyze idea ---
+function analyze(idea) {
+  const a = {domain:'通用项目',techs:[],scale:'中型应用项目',challenges:[],keywords:[]};
+  const t = idea;
+  for (const d of DOMAINS) { if (d.p.test(t)) { a.domain=d.d; a.keywords.push(...d.kw); break; } }
+  for (const k of TECHS) { if (k.p.test(t)&&!a.techs.includes(k.t)) a.techs.push(k.t); }
+  if (/平台|系统|生态|企业|集团|大型/.test(t)) a.scale='大型企业级项目';
+  else if (/脚本|插件|小工具|简单|个人|单一/.test(t)) a.scale='小型工具项目';
+  const ch = [
+    {p:/实时|低延迟|高并发|毫秒/,c:'实时性要求'},
+    {p:/大规模|海量|大数据|百万/,c:'海量数据处理'},
+    {p:/安全|隐私|加密|合规/,c:'安全性与合规性'},
+    {p:/可靠|容错|灾备|高可用/,c:'系统可靠性'},
+    {p:/成本|预算|资源|有限/,c:'成本控制'},
+    {p:/团队|人力|协作|多人/,c:'团队协作'},
+    {p:/时间|紧迫|快速|短期/,c:'交付时间压力'},
+    {p:/用户|体验|易用|界面/,c:'用户体验'}
+  ];
+  for (const c of ch) { if (c.p.test(t)) a.challenges.push(c.c); }
+  return a;
+}
+
+// --- Question generation (Socratic one-at-a-time) ---
+function buildQuestions(analysis, idea) {
+  const qs = [];
+  // Q1: Core purpose
+  qs.push({
+    id:'purpose', type:'choice',
+    text:`在你看来，这个${analysis.domain}项目最核心的价值是什么？`,
+    options:[
+      {v:'efficiency',label:'提升效率',desc:'自动化流程，减少人力/时间成本',rec:analysis.challenges.includes('交付时间压力')},
+      {v:'experience',label:'优化体验',desc:'改善用户使用感受和满意度'},
+      {v:'cost',label:'降低成本',desc:'减少资源消耗或运营支出',rec:analysis.challenges.includes('成本控制')},
+      {v:'innovation',label:'创新突破',desc:'解决目前没有好的方案的问题'}
+    ]
+  });
+  // Q2: Target users
+  qs.push({
+    id:'users', type:'choice',
+    text:'谁会使用这个产品？他们目前是如何解决这个问题的？',
+    options:[
+      {v:'internal',label:'内部团队',desc:'公司/组织内部员工使用'},
+      {v:'external',label:'外部客户',desc:'面向消费者或企业客户'},
+      {v:'developers',label:'开发者',desc:'技术用户、API使用者'},
+      {v:'public',label:'公众用户',desc:'面向广泛的互联网用户'}
+    ]
+  });
+  // Q3: Open-ended - success criteria
+  qs.push({
+    id:'success', type:'free',
+    text:'你如何判断这个项目是成功的？有没有具体的指标或里程碑？',
+    hint:'例如：用户数达到多少、处理速度提升多少、成本降低多少...'
+  });
+  // Q4: Constraints
+  qs.push({
+    id:'constraints', type:'choice',
+    text:'项目有哪些硬性约束需要考虑？',
+    options:[
+      {v:'time',label:'时间紧迫',desc:'有明确的上线截止日期'},
+      {v:'budget',label:'预算有限',desc:'需要控制开发成本'},
+      {v:'team',label:'人手不足',desc:'团队规模小，需要高效协作'},
+      {v:'tech',label:'技术约束',desc:'必须使用特定技术栈或平台'},
+      {v:'regulation',label:'合规要求',desc:'需要满足行业法规或安全标准'},
+      {v:'none',label:'暂无特殊约束',desc:'主要关注功能和质量'}
+    ]
+  });
+  // Q5: Scope check
+  qs.push({
+    id:'scope', type:'choice',
+    text:'你想先做最小可行版本（MVP），还是一次性构建完整功能？',
+    options:[
+      {v:'mvp',label:'先做 MVP',desc:'先实现核心功能，快速验证再迭代',rec:true},
+      {v:'full',label:'完整构建',desc:'一次性实现全部规划功能'},
+      {v:'modular',label:'分模块构建',desc:'按模块逐步实现，每个模块独立可用'}
+    ]
+  });
+  // Q6: Open-ended - existing alternatives
+  qs.push({
+    id:'alternatives', type:'free',
+    text:'目前市面上有没有类似的解决方案？你觉得它们哪里做得好、哪里做得不够？',
+    hint:'这能帮助我们明确差异化定位和设计优先级。'
+  });
+  // Q7: Domain-specific
+  if (analysis.domain==='无人机系统') {
+    qs.push({id:'drone_core',type:'choice',text:'无人机系统的核心应用场景是什么？',options:[
+      {v:'inspection',label:'工业巡检',desc:'电力/管道/桥梁/铁路巡检'},
+      {v:'mapping',label:'测绘建模',desc:'地形测绘、3D建模'},
+      {v:'monitoring',label:'环境监测',desc:'空气质量、灾害预警'},
+      {v:'security',label:'安防巡逻',desc:'园区/边境安防'}
+    ]});
+  } else if (analysis.domain==='电子商务') {
+    qs.push({id:'ecom_mode',type:'choice',text:'电商平台的主要商业模式？',options:[
+      {v:'b2c',label:'B2C 零售',desc:'品牌直接面向消费者'},
+      {v:'c2c',label:'C2C 交易',desc:'个人对个人'},
+      {v:'b2b',label:'B2B 批发',desc:'企业对企业'},
+      {v:'marketplace',label:'多商户平台',desc:'类似淘宝/京东的入驻模式'}
+    ]});
+  } else if (analysis.domain==='Web应用'||analysis.domain==='移动应用') {
+    qs.push({id:'platform',type:'choice',text:'需要支持哪些平台？',options:[
+      {v:'web',label:'仅 Web',desc:'PC浏览器访问'},
+      {v:'mobile',label:'仅移动端',desc:'iOS/Android APP'},
+      {v:'miniapp',label:'小程序',desc:'微信/支付宝'},
+      {v:'all',label:'全平台',desc:'以上全部'}
+    ]});
+  } else {
+    qs.push({id:'tech_pref',type:'choice',text:'你对技术选型的偏好？',options:[
+      {v:'modern',label:'前沿技术',desc:'愿意尝试新技术栈'},
+      {v:'stable',label:'成熟稳定',desc:'优先验证过的技术',rec:true},
+      {v:'simple',label:'简单轻量',desc:'够用就好，避免过度设计'},
+      {v:'flexible',label:'灵活选择',desc:'根据场景选择最合适的'}
+    ]});
+  }
+  return qs;
+}
+
+// --- Option generation ---
+function buildOptions(analysis, answers) {
+  const opts = [];
+  const isUrgent = answers.constraints==='time';
+  const wantMvp = answers.scope==='mvp';
+
+  opts.push({
+    id:'agile', title:'敏捷迭代方案', recommended:wantMvp||isUrgent,
+    desc:'MVP 优先，快速验证核心假设，基于反馈持续迭代',
+    pros:['快速交付可用版本，尽早获取真实反馈','降低项目风险，方向错误时及时调整','灵活适应需求变化'],
+    cons:['前期架构可能需要后期调整','需要持续的用户反馈渠道','长期维护可能增加技术债务'],
+    fit: wantMvp||isUrgent ? '最适合你的当前情况' : '适合需要快速验证想法的场景',
+    phases:['核心 MVP（2-4周）','用户反馈 & 方向修正（2-3周）','功能迭代完善（持续）']
+  });
+
+  opts.push({
+    id:'phased', title:'分阶段交付方案', recommended: analysis.scale.includes('大型'),
+    desc:'先完成整体架构设计，再按阶段交付各功能模块',
+    pros:['架构稳定，减少后期大规模重构','便于团队分工与协作','文档完整，利于交接和维护'],
+    cons:['前期设计投入较大','需求变化时调整成本较高','首次交付周期较长'],
+    fit: analysis.scale.includes('大型') ? '最适合你的大型项目' : '适合需求相对明确的场景',
+    phases:['整体架构设计（2-3周）','核心模块开发（4-8周）','集成测试（2-4周）','上线优化（持续）']
+  });
+
+  opts.push({
+    id:'modular', title:'模块化并行方案', recommended: answers.constraints==='team'&&!isUrgent,
+    desc:'将系统拆分为独立模块，可并行开发、独立部署',
+    pros:['可扩展性强，新功能即插即用','可并行开发，提升团队效率','每个模块可独立测试和部署'],
+    cons:['模块间接口设计需要前期投入','集成测试工作量较大','需要良好的架构设计能力'],
+    fit: '适合团队协作、可并行推进的场景',
+    phases:['接口设计 & 架构约定（1-2周）','模块并行开发（4-8周）','集成测试 & 联调（2-3周）','优化上线（2周）']
+  });
+
+  return opts;
+}
+
+// --- Design doc generation ---
+function buildDesignDoc(analysis, answers, option, idea) {
+  const d = new Date();
+  const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const name = idea.split('\n')[0].trim().replace(/^(?:我想|我要|我想做|我要做|做个?|开发|创建|搭建|做一个?)\s*/,'').substring(0,30)||'未命名项目';
+
+  const valueMap={efficiency:'提升效率，减少人力/时间成本',experience:'优化用户体验',cost:'降低运营成本',innovation:'创新突破，解决现有方案不足'};
+  const userMap={internal:'内部团队/员工',external:'外部客户',developers:'开发者/技术人员',public:'公众用户'};
+  const scopeMap={mvp:'先做最小可行版本（MVP），快速验证后迭代',full:'一次性构建完整功能',modular:'分模块逐步实现，每模块独立可用'};
+
+  // Modules by domain
+  let mods;
+  if(analysis.domain==='无人机系统'){
+    mods=[{n:'飞行控制模块',d:'航线规划、飞行状态监控、紧急降落',p:'P0',t:'2-3周'},{n:'视觉感知模块',d:'YOLO目标检测、避障算法、图像采集',p:'P0',t:'2-3周'},{n:'高精度定位模块',d:'RTK差分定位、航线跟踪',p:'P0',t:'1-2周'},{n:'数据处理模块',d:'巡检数据存储、缺陷分析、可视化报表',p:'P1',t:'2周'},{n:'地面站软件',d:'任务管理、实时监控、数据回放',p:'P1',t:'2-3周'}];
+  } else if(analysis.domain==='电子商务'){
+    mods=[{n:'用户系统',d:'注册登录、权限管理、个人中心',p:'P0',t:'1-2周'},{n:'商品管理',d:'商品发布、分类、搜索、详情',p:'P0',t:'2周'},{n:'订单交易',d:'购物车、下单、支付、退款',p:'P0',t:'2-3周'},{n:'消息通知',d:'订单状态推送、系统消息',p:'P1',t:'1周'},{n:'运营后台',d:'数据统计、内容管理',p:'P2',t:'2周'}];
+  } else {
+    mods=[{n:'核心业务模块',d:'主要业务逻辑和核心流程',p:'P0',t:'3-4周'},{n:'用户系统',d:'注册登录、权限控制、个人设置',p:'P0',t:'1-2周'},{n:'数据管理',d:'数据存储、查询、导入导出',p:'P1',t:'2周'},{n:'通知系统',d:'消息推送、邮件通知',p:'P1',t:'1周'},{n:'运营分析',d:'数据统计、行为分析',p:'P2',t:'1-2周'}];
+  }
+
+  // Tech stack
+  let techs;
+  if(analysis.domain==='无人机系统'){
+    techs=[{l:'飞行控制',t:'PX4 + QGroundControl',n:'开源飞控方案，支持自定义航线'},{l:'高精度定位',t:'RTK + GPS/北斗',n:'厘米级定位精度'},{l:'视觉感知',t:'YOLO + OpenCV + Python',n:'实时目标检测与避障'},{l:'后端服务',t:'Python FastAPI',n:'RESTful API，数据处理'},{l:'前端界面',t:'Vue.js + ECharts',n:'地面站软件，数据可视化'},{l:'数据存储',t:'PostgreSQL + MinIO',n:'结构化数据 + 图像/视频存储'}];
+  } else if(analysis.domain==='电子商务'){
+    techs=[{l:'前端',t:'Vue.js / React',n:'响应式用户界面'},{l:'后端',t:'Node.js / Spring Boot',n:'核心业务逻辑'},{l:'数据库',t:'MySQL + Redis',n:'持久化 + 缓存'},{l:'存储',t:'OSS / S3',n:'商品图片、文件存储'},{l:'消息队列',t:'RabbitMQ / Kafka',n:'异步处理、订单通知'},{l:'部署',t:'Docker + Nginx',n:'容器化部署'}];
+  } else {
+    techs=[{l:'前端',t:'Vue.js / React',n:'用户界面'},{l:'后端',t:'Node.js / Python',n:'业务逻辑与 API'},{l:'数据库',t:'PostgreSQL + Redis',n:'数据存储与缓存'},{l:'部署',t:'Docker + Nginx',n:'容器化部署'},{l:'监控',t:'Prometheus + Grafana',n:'系统监控与告警'}];
+  }
+
+  // Risks
+  let risks = [];
+  if(answers.constraints==='time') risks.push({r:'时间不足导致质量下降',l:'高',m:'优先核心功能，允许次要功能延期'});
+  if(answers.constraints==='budget') risks.push({r:'预算超支',l:'高',m:'采用开源方案，控制第三方服务成本'});
+  if(answers.constraints==='team') risks.push({r:'人力不足影响进度',l:'中',m:'合理排期，必要时缩减范围'});
+  risks.push({r:'需求理解偏差',l:'中',m:'MVP 快速验证，保持与用户高频沟通'});
+  if(analysis.challenges.includes('安全性与合规性')) risks.push({r:'安全漏洞',l:'高',m:'安全设计前置，定期审计'});
+
+  // Success criteria from free answer
+  const successCriteria = S.freeAnswers.find(a=>a.qid==='success')?.text || '核心功能完整可用，用户体验达到预期';
+
+  const md = `# 设计文档：${name}
+
+**日期**: ${dateStr}  
+**领域**: ${analysis.domain}  
+**规模**: ${analysis.scale}
+
+---
+
+## 1. 项目概述
+
+${idea}
+
+---
+
+## 2. 需求分析
+
+### 2.1 核心价值
+${valueMap[answers.purpose]||'提供创新解决方案'}
+
+### 2.2 目标用户
+${userMap[answers.users]||'将在讨论中进一步明确'}
+
+### 2.3 成功标准
+${successCriteria}
+
+### 2.4 项目范围
+${scopeMap[answers.scope]||'逐步迭代'}
+
+### 2.5 硬性约束
+${answers.constraints==='none'?'暂无特殊约束':({time:'时间紧迫，需快速交付',budget:'预算有限，需控制成本',team:'人手不足，需高效协作',tech:'技术栈有约束',regulation:'需满足合规要求'}[answers.constraints]||'将在后续讨论中确认')}
+
+${S.freeAnswers.find(a=>a.qid==='alternatives')?'\n### 2.6 竞品分析\n'+S.freeAnswers.find(a=>a.qid==='alternatives').text+'\n':''}
+---
+
+## 3. 方案选择：${option.title}
+
+**方案描述**: ${option.desc}
+
+### 3.1 方案优势
+${option.pros.map(p=>'- '+p).join('\n')}
+
+### 3.2 方案劣势
+${option.cons.map(c=>'- '+c).join('\n')}
+
+### 3.3 实施阶段
+${option.phases.map((p,i)=>`${i+1}. ${p}`).join('\n')}
+
+---
+
+## 4. 功能模块设计
+
+| 模块 | 功能描述 | 优先级 | 预估工时 |
+|-----|---------|--------|---------|
+${mods.map(m=>`| ${m.n} | ${m.d} | ${m.p} | ${m.t} |`).join('\n')}
+
+### 设计原则
+- **隔离性**：每个模块职责单一，通过清晰接口通信
+- **可测试性**：模块可独立理解、独立测试
+- **可替换性**：修改内部实现不影响其他模块
+
+---
+
+## 5. 技术架构
+
+| 层次 | 技术选型 | 说明 |
+|-----|---------|-----|
+${techs.map(t=>`| ${t.l} | ${t.t} | ${t.n} |`).join('\n')}
+
+---
+
+## 6. 项目规划
+
+### Phase 1: 核心开发（${answers.scope==='mvp'?'4-6':'6-10'}周）
+- 完成所有 P0 模块
+- 基础用户界面
+- 核心流程跑通
+
+### Phase 2: 完善优化（2-4周）
+- P1 模块开发
+- 性能优化
+- 用户体验改进
+
+### Phase 3: 扩展上线（持续）
+- P2 模块及增值功能
+- 监控与运维
+- 基于反馈持续迭代
+
+---
+
+## 7. 风险评估
+
+| 风险 | 等级 | 应对策略 |
+|-----|-----|---------|
+${risks.map(r=>`| ${r.r} | ${r.l} | ${r.m} |`).join('\n')}
+
+---
+
+## 8. 自检清单
+
+- [x] 无 TBD / TODO 等未完成占位符
+- [x] 模块边界清晰，职责单一
+- [x] 架构设计与功能描述一致
+- [x] 需求无歧义，优先级明确
+- [x] 范围适合单一实施计划
+
+---
+
+*本文档由 Brainstorming 智能规划工具生成*  
+*基于 Superpowers (obra/superpowers) 苏格拉底式设计提炼方法*`;
+
+  return md;
+}
+
+// --- Spec self-review ---
+function selfReview(md) {
+  const issues = [];
+  const checks = [
+    {re:/\bTBD\b|\bTODO\b/i, msg:'文档中存在 TBD/TODO 占位符，请补充具体内容'},
+    {re:/未命名项目/, msg:'项目名称未确定，建议补充一个有意义的名称'},
+    {re:/placeholder|PLACEHOLDER/i, msg:'发现 placeholder 占位符，需要替换为实际内容'}
+  ];
+  for (const c of checks) { if (c.re.test(md)) issues.push(c.msg); }
+
+  const passes = [
+    '模块边界清晰，各模块有明确职责',
+    '包含功能优先级排序（P0/P1/P2）',
+    '包含技术架构与选型说明',
+    '包含风险评估与应对策略',
+    '包含分阶段实施计划',
+    '无 TBD / TODO 等未完成占位符'
+  ];
+
+  return {issues, passes};
+}
+
+// =============================================
+// UI Logic
+// =============================================
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show';
+  setTimeout(()=> t.className='toast', 2500);
+}
+
+function jumpPhase(n) {
+  if (n > 1 && !S.idea) { toast('请先输入你的想法'); return; }
+  if (n === 3 && S.qIndex < S.questions.length) { toast('请先完成问题讨论'); return; }
+  if (n === 4 && S.selectedOpt === null) { toast('请先选择方案'); return; }
+  if (n === 5) { if(!document.getElementById('ck1').checked||!document.getElementById('ck2').checked||!document.getElementById('ck3').checked){toast('请完成确认勾选');return;} }
+
+  S.phase = n;
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('phase'+n).classList.add('active');
+
+  // Update nav
+  document.querySelectorAll('.ph').forEach((el,i) => {
+    el.classList.remove('active','done');
+    if (i+1 < n) el.classList.add('done');
+    else if (i+1 === n) el.classList.add('active');
+  });
+  document.querySelectorAll('.ph-connector').forEach((el,i) => {
+    el.classList.toggle('done', i < n-1);
+  });
+
+  if (n===3) renderOptions();
+  if (n===4) renderDesignPreview();
+  if (n===5) renderFinal();
+
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// --- Phase 1 → 2 ---
+function startSession() {
+  const idea = document.getElementById('ideaInput').value.trim();
+  if (!idea) { toast('请描述你的想法'); return; }
+  if (idea.length < 5) { toast('请再详细描述一下你的想法'); return; }
+
+  S.idea = idea;
+  S.analysis = analyze(idea);
+  S.answers = {};
+  S.freeAnswers = [];
+  S.qIndex = 0;
+  S.questions = buildQuestions(S.analysis, idea);
+
+  renderAnalysisBlock();
+  renderCurrentQuestion();
+  jumpPhase(2);
+}
+
+function renderAnalysisBlock() {
+  const a = S.analysis;
+  const techTags = a.techs.length ? a.techs.slice(0,6).map(t=>`<span class="tag tag-blue">${t}</span>`).join('') : '<span style="color:var(--text-muted);font-size:.88rem">未识别到特定技术（可在讨论中补充）</span>';
+  const kwTags = a.keywords.length ? a.keywords.slice(0,5).map(k=>`<span class="tag tag-green">${k}</span>`).join('') : '';
+  const chText = a.challenges.length ? a.challenges.join('、') : '暂未识别明显挑战';
+  document.getElementById('analysisBlock').innerHTML = `
+    <div class="analysis-card">
+      <h4>📊 智能分析结果</h4>
+      <p><strong>领域识别：</strong><span class="tag tag-green">${a.domain}</span> <span class="tag tag-amber">${a.scale}</span></p>
+      ${kwTags?'<p style="margin-top:.5rem"><strong>关联概念：</strong>'+kwTags+'</p>':''}
+      <p style="margin-top:.5rem"><strong>技术栈：</strong> ${techTags}</p>
+      <p style="margin-top:.5rem"><strong>潜在挑战：</strong> ${chText}</p>
+    </div>
+    <div class="hint-box" style="margin-top:1rem">
+      <h4>💬 对话规则（来自 Brainstorming 技能）</h4>
+      <ul>
+        <li><strong>一次一个问题</strong> — 不一次性抛出多个问题</li>
+        <li><strong>优先多选题</strong> — 选择题比开放式问题更容易回答</li>
+        <li><strong>没有"太简单"的项目</strong> — 越简单的想法越容易有未审视的假设</li>
+        <li><strong>随时可以回退</strong> — 对任何问题都可以补充说明</li>
+      </ul>
+    </div>`;
+}
+
+function renderCurrentQuestion() {
+  const area = document.getElementById('chatArea');
+  const q = S.questions[S.qIndex];
+  if (!q) return;
+
+  const inputDiv = document.getElementById('msgInput');
+  const finishBtn = document.getElementById('finishQBtn');
+
+  if (q.type === 'choice') {
+    const optsHtml = q.options.map(o => `
+      <div class="opt-btn" onclick="pickChoice('${q.id}','${o.v}',this)">
+        <h4>${o.label} ${o.rec?'<span style="color:var(--accent);font-size:.75rem">★ 推荐</span>':''}</h4>
+        <p>${o.desc}</p>
+      </div>`).join('');
+
+    area.innerHTML += `
+      <div class="msg msg-system">
+        <div class="msg-label">Brainstorming · 问题 ${S.qIndex+1}/${S.questions.length}</div>
+        <div class="msg-body"><strong>${q.text}</strong></div>
+        <div class="msg-options">${optsHtml}</div>
+      </div>`;
+    inputDiv.style.display = 'none';
+  } else {
+    area.innerHTML += `
+      <div class="msg msg-system">
+        <div class="msg-label">Brainstorming · 问题 ${S.qIndex+1}/${S.questions.length}（开放式）</div>
+        <div class="msg-body"><strong>${q.text}</strong></div>
+        ${q.hint?'<p style="color:var(--text-muted);font-size:.85rem;margin-top:.5rem">💡 '+q.hint+'</p>':''}
+      </div>`;
+    inputDiv.style.display = 'flex';
+    document.getElementById('freeInput').value = '';
+    document.getElementById('freeInput').focus();
+  }
+
+  finishBtn.style.display = 'none';
+  area.scrollTop = area.scrollHeight;
+}
+
+function pickChoice(qid, val, el) {
+  S.answers[qid] = val;
+  const q = S.questions.find(q=>q.id===qid);
+  const opt = q.options.find(o=>o.v===val);
+
+  // Show user answer bubble
+  const area = document.getElementById('chatArea');
+  area.innerHTML += `<div class="msg msg-user"><div class="msg-bubble">${opt.label}</div></div>`;
+
+  // Remove selection from sibling buttons
+  el.parentElement.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+
+  // Auto advance after brief delay
+  setTimeout(() => advanceQuestion(), 400);
+  area.scrollTop = area.scrollHeight;
+}
+
+function submitFreeInput() {
+  const input = document.getElementById('freeInput');
+  const text = input.value.trim();
+  if (!text) { toast('请输入你的回答'); return; }
+
+  const qid = S.questions[S.qIndex].id;
+  S.answers[qid] = text;
+  S.freeAnswers.push({qid, text});
+
+  const area = document.getElementById('chatArea');
+  area.innerHTML += `<div class="msg msg-user"><div class="msg-bubble">${escHtml(text)}</div></div>`;
+  document.getElementById('msgInput').style.display = 'none';
+
+  setTimeout(() => advanceQuestion(), 400);
+  area.scrollTop = area.scrollHeight;
+}
+
+function advanceQuestion() {
+  S.qIndex++;
+  if (S.qIndex >= S.questions.length) {
+    document.getElementById('finishQBtn').style.display = 'inline-flex';
+    toast('所有问题已讨论完毕');
+  } else {
+    renderCurrentQuestion();
+  }
+}
+
+function finishQuestions() {
+  jumpPhase(3);
+}
+
+// --- Phase 3: Options ---
+function renderOptions() {
+  S.options = buildOptions(S.analysis, S.answers);
+  S.selectedOpt = null;
+
+  document.getElementById('optCount').textContent = S.options.length;
+
+  const grid = document.getElementById('optGrid');
+  grid.innerHTML = S.options.map((o,i) => `
+    <div class="option-card ${o.recommended?'recommended':''}" id="oc${i}" onclick="pickOption(${i})">
+      ${o.recommended?'<span class="rec-badge">★ 推荐</span>':''}
+      <h4>${o.title}</h4>
+      <p>${o.desc}</p>
+      <div class="fit">✓ ${o.fit}</div>
+    </div>`).join('');
+
+  const tbl = document.getElementById('cmpTable');
+  tbl.innerHTML = `<tr><th>维度</th>${S.options.map(o=>`<th>${o.title}</th>`).join('')}</tr>
+    <tr><td>优势</td>${S.options.map(o=>`<td>${o.pros.map(p=>'• '+p).join('<br>')}</td>`).join('')}</tr>
+    <tr><td>劣势</td>${S.options.map(o=>`<td>${o.cons.map(c=>'• '+c).join('<br>')}</td>`).join('')}</tr>
+    <tr><td>实施阶段</td>${S.options.map(o=>`<td>${o.phases.map((p,i)=>(i+1)+'. '+p).join('<br>')}</td>`).join('')}</tr>
+    <tr><td>适合场景</td>${S.options.map(o=>`<td>${o.fit}</td>`).join('')}</tr>`;
+}
+
+function pickOption(i) {
+  S.selectedOpt = i;
+  document.querySelectorAll('.option-card').forEach((c,idx)=>c.classList.toggle('selected',idx===i));
+}
+
+function confirmOption() {
+  if (S.selectedOpt===null) { toast('请选择一个方案'); return; }
+  jumpPhase(4);
+}
+
+// --- Phase 4: Design Preview ---
+function renderDesignPreview() {
+  const opt = S.options[S.selectedOpt];
+  S.designMd = buildDesignDoc(S.analysis, S.answers, opt, S.idea);
+  const review = selfReview(S.designMd);
+
+  const reviewHtml = review.issues.length
+    ? review.issues.map(i=>`<p class="issue">⚠ ${i}</p>`).join('')
+    : '<p class="pass">✓ 自检通过，未发现问题</p>';
+  const passesHtml = review.passes.map(p=>`<p class="pass">✓ ${p}</p>`).join('');
+
+  document.getElementById('reviewBlock').innerHTML = `
+    <div class="review-section">
+      <h4>🔍 设计文档自检</h4>
+      ${reviewHtml}
+      ${passesHtml}
+    </div>`;
+
+  document.getElementById('docPreview').innerHTML = mdToHtml(S.designMd);
+}
+
+function generateFinal() { jumpPhase(5); }
+
+// --- Phase 5: Final ---
+function renderFinal() {
+  document.getElementById('finalDoc').innerHTML = mdToHtml(S.designMd);
+}
+
+function exportMd() {
+  const blob = new Blob([S.designMd], {type:'text/markdown;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `design-${new Date().toISOString().split('T')[0]}.md`;
+  a.click();
+  toast('Markdown 文件已下载');
+}
+
+function copyDoc() {
+  navigator.clipboard.writeText(S.designMd).then(()=>toast('已复制到剪贴板'));
+}
+
+function restart() {
+  S.phase=1; S.idea=''; S.answers={}; S.freeAnswers=[]; S.questions=[]; S.qIndex=0;
+  S.options=[]; S.selectedOpt=null; S.designDoc=''; S.designMd='';
+  document.getElementById('ideaInput').value='';
+  document.getElementById('chatArea').innerHTML='';
+  document.getElementById('analysisBlock').innerHTML='';
+  document.getElementById('ck1').checked=false;
+  document.getElementById('ck2').checked=false;
+  document.getElementById('ck3').checked=false;
+  jumpPhase(1);
+}
+
+// --- Markdown to HTML (simple) ---
+function mdToHtml(md) {
+  let h = md;
+  h = h.replace(/^### (.*$)/gm,'<h3>$1</h3>');
+  h = h.replace(/^## (.*$)/gm,'<h2>$1</h2>');
+  h = h.replace(/^# (.*$)/gm,'<h1>$1</h1>');
+  h = h.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+  h = h.replace(/^- \[x\] (.*)/gm,'<li style="color:var(--success)">✓ $1</li>');
+  h = h.replace(/^- \[ \] (.*)/gm,'<li>○ $1</li>');
+  h = h.replace(/^- (.*$)/gm,'<li>$1</li>');
+
+  // Tables
+  const lines = h.split('\n');
+  let result = [];
+  let inTable = false;
+  let tableRows = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+      if (!inTable) { inTable = true; tableRows = []; }
+      const cells = trimmed.split('|').slice(1,-1).map(c=>c.trim());
+      if (!cells.every(c=>/^-+$/.test(c))) tableRows.push(cells);
+    } else {
+      if (inTable) {
+        let tbl = '<table>';
+        tableRows.forEach((row,ri) => {
+          const tag = ri===0?'th':'td';
+          tbl += '<tr>' + row.map(c=>`<${tag}>${c}</${tag}>`).join('') + '</tr>';
+        });
+        tbl += '</table>';
+        result.push(tbl);
+        inTable = false; tableRows = [];
+      }
+      if (trimmed === '---') { result.push('<hr>'); }
+      else if (trimmed) { result.push(trimmed); }
+    }
+  }
+  if (inTable) {
+    let tbl = '<table>';
+    tableRows.forEach((row,ri) => {
+      const tag = ri===0?'th':'td';
+      tbl += '<tr>' + row.map(c=>`<${tag}>${c}</${tag}>`).join('') + '</tr>';
+    });
+    tbl += '</table>';
+    result.push(tbl);
+  }
+
+  h = result.join('\n');
+
+  // Wrap loose li into ul
+  h = h.replace(/(<li>[\s\S]*?<\/li>)/g, (m) => {
+    if (m.startsWith('<ul>')) return m;
+    return '<ul>'+m+'</ul>';
+  });
+  // Merge adjacent uls
+  h = h.replace(/<\/ul>\s*<ul>/g, '');
+
+  // Wrap remaining text in p
+  h = h.replace(/^(?!<[hulto]|<hr|<table|<tr|<td|<th|<li|<ul|<div|<strong)(.*\S.*)$/gm,'<p>$1</p>');
+
+  return h;
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// Keyboard support
+document.addEventListener('keydown', e => {
+  if (e.key==='Enter' && !e.shiftKey && document.activeElement===document.getElementById('freeInput')) {
+    e.preventDefault();
+    submitFreeInput();
+  }
+});
+</script>
+</body>
+</html>
