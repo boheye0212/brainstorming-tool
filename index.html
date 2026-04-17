@@ -610,7 +610,7 @@ ${risks.map(r=>`| ${r.r} | ${r.l} | ${r.m} |`).join('\n')}
 
 ## 8. 自检清单
 
-- [x] 无未完成的占位符
+- [x] 所有必需章节完整（概述/需求/方案/模块/架构/规划/风险）
 - [x] 模块边界清晰，职责单一
 - [x] 架构设计与功能描述一致
 - [x] 需求无歧义，优先级明确
@@ -625,14 +625,18 @@ ${risks.map(r=>`| ${r.r} | ${r.l} | ${r.m} |`).join('\n')}
 }
 
 // --- Spec self-review ---
+// 只检查结构完整性，不用文本匹配检测"占位符"（会误报正常内容）
 function selfReview(md) {
   const issues = [];
-  const checks = [
-    {re:/\bTBD\b|\bTODO\b/i, msg:'文档中存在 TBD/TODO 占位符，请补充具体内容'},
-    {re:/未命名项目/, msg:'项目名称未确定，建议补充一个有意义的名称'},
-    {re:/placeholder|PLACEHOLDER/i, msg:'发现 placeholder 占位符，需要替换为实际内容'}
-  ];
-  for (const c of checks) { if (c.re.test(md)) issues.push(c.msg); }
+
+  // 结构性检查：文档应包含这些章节
+  const requiredSections = ['项目概述','需求分析','方案选择','功能模块','技术架构','项目规划','风险评估'];
+  for (const sec of requiredSections) {
+    if (!md.includes(sec)) issues.push(`缺少章节：${sec}`);
+  }
+
+  // 检查是否有真正未填写的模板变量（${}形式，说明代码bug）
+  if (/\$\{[^}]+\}/.test(md)) issues.push('文档存在未渲染的模板变量，请检查代码');
 
   const passes = [
     '模块边界清晰，各模块有明确职责',
@@ -640,7 +644,7 @@ function selfReview(md) {
     '包含技术架构与选型说明',
     '包含风险评估与应对策略',
     '包含分阶段实施计划',
-    '无未完成的占位符'
+    '所有必需章节完整'
   ];
 
   return {issues, passes};
